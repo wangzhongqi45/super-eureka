@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>生活小百科大挑战</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f0f8ff;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #4CAF50;
+            text-align: center;
+        }
+        #question {
+            margin: 20px 0;
+            font-size: 1.2em;
+        }
+        .option {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .option:hover {
+            background: #f0f8ff;
+        }
+        .selected {
+            background: #4CAF50 !important;
+            color: white;
+        }
+        #timer {
+            text-align: right;
+            font-weight: bold;
+            font-size: 1.5em;
+            color: #e65100;
+        }
+        #score {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 1.5em;
+            color: #2196F3;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        #result {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            background: #fff3e0;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>生活小百科大挑战</h1>
+        <div id="timer">剩余时间：60秒</div>
+        <div id="question"></div>
+        <div id="options"></div>
+        <button onclick="nextQuestion()">下一题</button>
+        <div id="score"></div>
+        <div id="result">
+            <h2>竞赛结束！</h2>
+            <p>你的得分： <span id="finalScore"></span></p>
+            <p>排名：<span id="rank"></span></p>
+        </div>
+    </div>
+
+    <script>
+        // 50道题目（示例，需扩展完整）
+        const questions = [
+            {
+                question: "成年人每天建议的睡眠时间是？",
+                options: ["5小时", "7-9小时", "12小时", "越多越好"],
+                answer: [1], // 单选题用数组
+                type: "single"
+            },
+            {
+                question: "以下哪些是健康早餐的正确搭配？（多选）",
+                options: ["方便面+可乐", "燕麦粥+水煮蛋+苹果", "油条+豆浆+咸菜", "全麦面包+坚果+牛奶"],
+                answer: [1, 3], // 多选题用数组
+                type: "multiple"
+            },
+            // ...（继续添加题目，共50题）
+            {
+                question: "如何快速去除微波炉的异味？",
+                options: ["放一片面包烤1分钟", "放一碗醋加热", "用酒精擦拭内壁", "打开窗户放风"],
+                answer: [1],
+                type: "single"
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let selectedOptions = [];
+        let timer;
+
+        function startQuiz() {
+            showQuestion();
+            timer = setInterval(countdown, 1000);
+        }
+
+        function showQuestion() {
+            const questionElement = document.getElementById("question");
+            const optionsElement = document.getElementById("options");
+            
+            if (currentQuestion < questions.length) {
+                questionElement.textContent = questions[currentQuestion].question;
+                optionsElement.innerHTML = "";
+                selectedOptions = [];
+                
+                questions[currentQuestion].options.forEach((option, index) => {
+                    const div = document.createElement("div");
+                    div.className = "option";
+                    div.textContent = option;
+                    div.onclick = () => toggleOption(div, index);
+                    optionsElement.appendChild(div);
+                });
+                
+                document.getElementById("score").textContent = `当前得分：${score}`;
+            } else {
+                clearInterval(timer);
+                document.getElementById("finalScore").textContent = score;
+                document.getElementById("rank").textContent = getRank(score);
+                document.getElementById("result").style.display = "block";
+            }
+        }
+
+        function toggleOption(element, index) {
+            const options = document.getElementsByClassName("option");
+            const isSelected = element.classList.contains("selected");
+            
+            if (questions[currentQuestion].type === "single") {
+                Array.from(options).forEach(opt => opt.classList.remove("selected"));
+                element.classList.toggle("selected");
+                selectedOptions = [index];
+            } else {
+                element.classList.toggle("selected");
+                if (isSelected) {
+                    selectedOptions = selectedOptions.filter(opt => opt !== index);
+                } else {
+                    selectedOptions.push(index);
+                }
+            }
+        }
+
+        function nextQuestion() {
+            if (selectedOptions.length === 0) {
+                alert("请选择答案后再继续！");
+                return;
+            }
+            
+            checkAnswer();
+            currentQuestion++;
+            showQuestion();
+        }
+
+        function checkAnswer() {
+            const selected = selectedOptions;
+            const answer = questions[currentQuestion].answer;
+            
+            if (arraysEqual(selected.sort(), answer.sort())) {
+                score += questions[currentQuestion].type === "single" ? 1 : 2;
+            }
+        }
+
+        function arraysEqual(a, b) {
+            if (a === b) return true;
+            if (a == null || b == null) return false;
+            if (a.length !== b.length) return false;
+            
+            for (let i = 0; i < a.length; ++i) {
+                if (a[i] !== b[i]) return false;
+            }
+            return true;
+        }
+
+        function countdown() {
+            const time = parseInt(document.getElementById("timer").textContent.match(/\d+/)[0]);
+            if (time > 0) {
+                document.getElementById("timer").textContent = `剩余时间：${time - 1}秒`;
+            } else {
+                clearInterval(timer);
+                alert("时间到！竞赛结束！");
+                nextQuestion();
+            }
+        }
+
+        function getRank(score) {
+            if (score >= 40) return "金牌生活达人";
+            if (score >= 30) return "银牌生活高手";
+            if (score >= 20) return "铜牌生活能手";
+            return "生活小白（继续加油！）";
+        }
+
+        startQuiz();
+    </script>
+</body>
+</html>
